@@ -1,0 +1,53 @@
+
+> edyra-frontend@2.0.0 build
+> next build
+
+  ▲ Next.js 14.2.3
+  - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+> [PWA] Compile server
+> [PWA] Compile server
+> [PWA] Compile client (static)
+> [PWA] Auto register service worker with: /home/suman/Downloads/Edyra/frontend/node_modules/next-pwa/register.js
+> [PWA] Service worker: /home/suman/Downloads/Edyra/frontend/public/sw.js
+> [PWA]   url: /sw.js
+> [PWA]   scope: /
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/86) ...
+   Generating static pages (21/86) 
+TypeError: Cannot read properties of null (reading 'phone')
+    at u (/home/suman/Downloads/Edyra/frontend/.next/server/app/faculty/profile/page.js:17:1164)
+    at nj (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nB (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:67538)
+    at nM (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:60046)
+    at nN (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nN (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546) {
+  digest: '534015605'
+}
+
+Error occurred prerendering page "/faculty/profile". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'phone')
+    at u (/home/suman/Downloads/Edyra/frontend/.next/server/app/faculty/profile/page.js:17:1164)
+    at nj (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nB (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:67538)
+    at nM (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:60046)
+    at nN (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nN (/home/suman/Downloads/Edyra/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+   Generating static pages (42/86) 
+   Generating static pages (64/86) 
+ ✓ Generating static pages (86/86)
+
+> Export encountered errors on following paths:
+	/faculty/profile/page: /faculty/profile

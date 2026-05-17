@@ -1,0 +1,18 @@
+appId: "com.edyra.webbrowser"
+productName: "Edyra Browser"
+directories:
+  output: dist
+files:
+  - "**/*"
+mac:
+  target:
+    - dmg
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+extraResources:
+  - "./renderer" 
+
