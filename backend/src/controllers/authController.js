@@ -594,97 +594,6 @@ export const changePassword = async (req, res, next) => {
   }
 };
 
-/* ========== SEED DEMO DATA ========== */
-export const seedDemo = async (req, res, next) => {
-  try {
-    const { secretKey } = req.body;
-    
-    // Simple security check
-    if (secretKey !== 'SEED_DEMO_2026') {
-      throw new AppError('Invalid secret key', 403);
-    }
-
-    const bcrypt = await import('bcryptjs');
-
-    // Create Admin - use plain password, let User model pre-save hook hash it
-    const adminExists = await User.findOne({ email: 'admin@university.edu' });
-    if (!adminExists) {
-      await User.create({
-        email: 'admin@university.edu',
-        password: 'Password@123',
-        firstName: 'System',
-        lastName: 'Admin',
-        role: 'admin',
-        isActive: true,
-        isVerified: true,
-      });
-    } else {
-      // Update existing - hash manually since updateOne bypasses pre-save
-      const hashedPassword = await bcrypt.default.hash('Password@123', 12);
-      await User.updateOne({ email: 'admin@university.edu' }, { role: 'admin', password: hashedPassword });
-    }
-
-    // Create Teacher
-    const teacherExists = await User.findOne({ email: 'teacher@university.edu' });
-    if (!teacherExists) {
-      await User.create({
-        email: 'teacher@university.edu',
-        password: 'Password@123',
-        firstName: 'Demo',
-        lastName: 'Teacher',
-        role: 'teacher',
-        isActive: true,
-        isVerified: true,
-      });
-    }
-
-    // Create Demo Students with DOB
-    const students = [
-      { studentId: 'EDY001', firstName: 'Rahul', lastName: 'Sharma', dob: '2000-05-15' },
-      { studentId: 'STU002', firstName: 'Priya', lastName: 'Patel', dob: '2001-03-22' },
-      { studentId: 'STU003', firstName: 'Amit', lastName: 'Kumar', dob: '2000-08-10' },
-      { studentId: 'STU004', firstName: 'Neha', lastName: 'Singh', dob: '2001-01-05' },
-      { studentId: 'STU005', firstName: 'Vikram', lastName: 'Reddy', dob: '2000-11-30' },
-    ];
-
-    for (const s of students) {
-      const exists = await User.findOne({ studentId: s.studentId });
-      if (!exists) {
-        await User.create({
-          email: `${s.studentId.toLowerCase()}@student.university.edu`,
-          password: 'Password@123',
-          firstName: s.firstName,
-          lastName: s.lastName,
-          studentId: s.studentId,
-          dateOfBirth: new Date(s.dob),
-          role: 'student',
-          department: 'Computer Science',
-          batch: '2024',
-          isActive: true,
-          isVerified: true,
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      message: 'Demo data seeded successfully',
-      credentials: {
-        admin: { email: 'admin@university.edu', password: 'Password@123' },
-        teacher: { email: 'teacher@university.edu', password: 'Password@123' },
-        students: students.map(s => ({
-          studentId: s.studentId,
-          dob: s.dob,
-          email: `${s.studentId.toLowerCase()}@student.university.edu`,
-          password: 'Password@123'
-        }))
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 /* ========== UPDATE PROFILE ========== */
 export const updateProfile = async (req, res, next) => {
   try {
@@ -876,7 +785,6 @@ export default {
   checkSession,
   getServerTime,
   changePassword,
-  seedDemo,
   updateProfile,
   forgotPassword,
   resetPassword,

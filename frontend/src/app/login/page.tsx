@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
+import LiveClock from '@/components/common/LiveClock';
 
 type Mode = 'student' | 'staff';
 
@@ -16,21 +17,9 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [serverTime, setServerTime] = useState('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-
-  const tickTime = useCallback(() => {
-    setServerTime(new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    tickTime();
-    const t = setInterval(tickTime, 1000);
-    return () => clearInterval(t);
-  }, [mounted, tickTime]);
 
   const handleStaff = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setSuccess(''); setSubmitting(true);
@@ -74,7 +63,7 @@ export default function LoginPage() {
             <div className="lms-logo-subtitle">Learning Management System</div>
           </div>
         </Link>
-        <div className="lms-header-time">{serverTime}</div>
+        <LiveClock />
       </header>
 
       {/* Main */}
@@ -192,7 +181,7 @@ export default function LoginPage() {
       {/* Footer */}
       <footer className="pub-footer">
         <div>© {new Date().getFullYear()} EDYRA — Learning Management System</div>
-        <div style={{ fontFamily: 'monospace', fontSize: 11 }}>{serverTime}</div>
+        <LiveClock className="pub-footer-time" />
       </footer>
     </div>
   );

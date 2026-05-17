@@ -40,9 +40,6 @@ router.post(
 router.post('/google-login', loginRateLimiter, authAdvancedController.googleLogin);
 router.post('/verify-2fa', loginRateLimiter, authAdvancedController.verify2FAToken);
 
-// Seed demo data (protected by secret key)
-router.post('/seed-demo', authController.seedDemo);
-
 // Server time - public, no auth needed (used on login page)
 router.get('/server-time', authController.getServerTime);
 

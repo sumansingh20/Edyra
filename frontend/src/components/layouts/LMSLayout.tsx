@@ -87,10 +87,11 @@ function getDashboardHref(role: string): string {
   return '/student/dashboard';
 }
 
+import LiveClock from '@/components/common/LiveClock';
+
 export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayoutProps) {
   const pathname = usePathname();
   const { user, logout, isAuthenticated, checkAuth } = useAuthStore();
-  const [serverTime, setServerTime] = useState('');
   const [mounted, setMounted] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -98,18 +99,6 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
   useEffect(() => {
     setMounted(true);
     checkAuth().catch(console.error).finally(() => setAuthChecked(true));
-  }, []);
-
-  useEffect(() => {
-    const tick = () => {
-      setServerTime(new Date().toLocaleString('en-IN', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-      }));
-    };
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -164,7 +153,7 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
         </div>
 
         <div className="lms-header-right">
-          <div className="lms-header-time">{serverTime}</div>
+          <LiveClock />
 
           {/* User menu */}
           <div style={{ position: 'relative' }}>
