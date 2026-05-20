@@ -7,7 +7,7 @@ import { loginRateLimiter } from '../middleware/security.js';
 
 const router = express.Router();
 
-// Public routes
+// ===== Public routes =====
 router.post(
   '/register',
   loginRateLimiter,
@@ -40,7 +40,12 @@ router.post(
 router.post('/google-login', loginRateLimiter, authAdvancedController.googleLogin);
 router.post('/verify-2fa', loginRateLimiter, authAdvancedController.verify2FAToken);
 
-// Server time - public, no auth needed (used on login page)
+// OAuth Callback (server-side for traditional OAuth flow)
+router.get('/oauth/google/callback', authAdvancedController.googleOAuthCallback || ((req, res) => {
+  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_not_configured`);
+}));
+
+// Server time - public (used on login/exam pages for clock sync)
 router.get('/server-time', authController.getServerTime);
 
 router.post(
@@ -49,7 +54,7 @@ router.post(
   authController.refreshToken
 );
 
-// Protected routes
+// ===== Protected routes =====
 router.use(authenticate);
 
 router.post('/logout', authController.logout);
@@ -64,6 +69,12 @@ router.put(
   authController.updateProfile
 );
 
+router.post(
+  '/profile/avatar',
+  validateSession,
+  authController.uploadAvatar
+);
+
 router.put(
   '/change-password',
   validateSession,
@@ -74,9 +85,14 @@ router.put(
 // Email verification (authenticated — request new token)
 router.post('/request-verification', authController.requestEmailVerification);
 
-// Advanced Auth - Protected
+// ===== 2FA (Protected) =====
 router.get('/2fa/generate', authAdvancedController.generate2FA);
 router.post('/2fa/enable', authAdvancedController.enable2FA);
+router.post('/2fa/disable', authAdvancedController.disable2FA || ((req, res) => {
+  res.json({ success: false, message: '2FA disable endpoint coming soon' });
+}));
+
+// ===== Device Management (Protected) =====
 router.post('/device/track', authAdvancedController.trackDevice);
 router.get('/device/list', authAdvancedController.getMyDevices);
 router.delete('/device/:deviceId', authAdvancedController.revokeDevice);

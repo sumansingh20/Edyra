@@ -12,10 +12,10 @@ function FacultyProfileContent() {
   const { user, checkAuth } = useAuthStore();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: (user as any)?.phone || '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
   });
 
   useEffect(() => {

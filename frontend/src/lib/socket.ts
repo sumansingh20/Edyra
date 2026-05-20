@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 class SocketService {
   private examSocket: Socket | null = null;
   private monitorSocket: Socket | null = null;
+  private notificationSocket: Socket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
 
@@ -42,6 +43,26 @@ class SocketService {
     });
 
     this.setupMonitorListeners();
+  }
+
+  // Connect to notification namespace (global)
+  connectNotifications(token: string) {
+    if (typeof window === 'undefined') return;
+    if (this.notificationSocket?.connected) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+
+    this.notificationSocket = io(`${socketUrl}/notifications`, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: this.maxReconnectAttempts,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+    });
+
+    this.notificationSocket.on('connect', () => console.log('[Notification Socket] Connected'));
+    this.notificationSocket.on('connect_error', (err) => console.error('[Notification Socket] Error:', err.message));
   }
 
   // Legacy connect method (backwards compatible)
@@ -192,6 +213,10 @@ class SocketService {
       this.monitorSocket.disconnect();
       this.monitorSocket = null;
     }
+    if (this.notificationSocket) {
+      this.notificationSocket.disconnect();
+      this.notificationSocket = null;
+    }
   }
 
   disconnectExam() {
@@ -314,10 +339,19 @@ class SocketService {
     this.examSocket?.on('session-joined', callback);
   }
 
+  // Notification listeners
+  onNotification(callback: (notification: any) => void) {
+    this.notificationSocket?.on('notification:new', callback);
+    this.notificationSocket?.on('exam:started', callback);
+    this.notificationSocket?.on('exam:ending', callback);
+    this.notificationSocket?.on('announcement:new', callback);
+  }
+
   // Remove event listener
   off(event: string) {
     this.examSocket?.off(event);
     this.monitorSocket?.off(event);
+    this.notificationSocket?.off(event);
   }
 
   // Check connection status

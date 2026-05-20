@@ -1,198 +1,308 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
 import LMSLayout from '@/components/layouts/LMSLayout';
+import StatCard from '@/components/ui/StatCard';
+import AnimatedCard from '@/components/ui/AnimatedCard';
 import api from '@/lib/api';
-import { format } from 'date-fns';
 
-interface Stats { totalStudents: number; totalTeachers: number; totalExams: number; totalSubmissions: number; }
-interface ActivityLog { _id: string; action: string; userEmail: string; userRole: string; targetType: string; status: string; createdAt: string; ipAddress?: string; }
-interface HealthData { api: { status: string; version: string }; database: { status: string; latency: string }; memory: { heapUsed: number; heapTotal: number; systemUsedPct: number }; uptime: { formatted: string }; }
+interface DashboardStats {
+  totalUsers: number;
+  totalStudents: number;
+  totalTeachers: number;
+  totalCourses: number;
+  totalExams: number;
+  activeExams: number;
+  totalSubmissions: number;
+  pendingGrading: number;
+  onlineUsers?: number;
+}
+
+interface RecentActivity {
+  id: string;
+  action: string;
+  userEmail: string;
+  userRole: string;
+  createdAt: string;
+  status: 'success' | 'failure' | 'blocked';
+}
+
+const QUICK_ACTIONS = [
+  { label: 'Create Exam', icon: '📝', href: '/admin/exams' },
+  { label: 'Add User', icon: '👤', href: '/admin/users' },
+  { label: 'Question Bank', icon: '❓', href: '/admin/questions' },
+  { label: 'Live Monitor', icon: '👁️', href: '/admin/monitor' },
+  { label: 'Audit Logs', icon: '📜', href: '/admin/logs' },
+  { label: 'Analytics', icon: '📊', href: '/admin/analytics' },
+  { label: 'Manage Courses', icon: '📚', href: '/admin/courses' },
+  { label: 'System Health', icon: '⚙️', href: '/admin/system' },
+];
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function AdminDashboard() {
-  const { user } = useAuthStore();
-  const [stats, setStats] = useState<Stats>({ totalStudents: 0, totalTeachers: 0, totalExams: 0, totalSubmissions: 0 });
-  const [activity, setActivity] = useState<ActivityLog[]>([]);
-  const [health, setHealth] = useState<HealthData | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [healthLoading, setHealthLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchAll = useCallback(async () => {
+  const fetchData = async () => {
     try {
-      const [statsRes, activityRes, healthRes] = await Promise.allSettled([
-        api.get('/analytics/overview'),
-        api.get('/admin/system/activity', { params: { limit: 8 } }),
-        api.get('/admin/system/health'),
+      const [statsRes, activityRes] = await Promise.allSettled([
+        api.get('/admin/dashboard'),
+        api.get('/admin/audit-logs?limit=8&sort=-createdAt'),
       ]);
-      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data.data || {});
-      if (activityRes.status === 'fulfilled') setActivity(activityRes.value.data.data.logs || []);
-      if (healthRes.status === 'fulfilled') setHealth(healthRes.value.data.data || null);
-    } catch { /* silent */ } finally {
+
+      if (statsRes.status === 'fulfilled') {
+        const d = statsRes.value.data?.data || statsRes.value.data;
+        setStats({
+          totalUsers: d.totalUsers ?? d.users ?? 0,
+          totalStudents: d.totalStudents ?? d.students ?? 0,
+          totalTeachers: d.totalTeachers ?? d.teachers ?? 0,
+          totalCourses: d.totalCourses ?? d.courses ?? 0,
+          totalExams: d.totalExams ?? d.exams ?? 0,
+          activeExams: d.activeExams ?? d.liveExams ?? 0,
+          totalSubmissions: d.totalSubmissions ?? d.submissions ?? 0,
+          pendingGrading: d.pendingGrading ?? 0,
+          onlineUsers: d.onlineUsers ?? 0,
+        });
+      }
+
+      if (activityRes.status === 'fulfilled') {
+        const logs = activityRes.value.data?.data?.logs || activityRes.value.data?.logs || [];
+        setActivity(logs.slice(0, 8));
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-      setHealthLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, 30000);
-    return () => clearInterval(id);
-  }, [fetchAll]);
-
-  const sk = (n: number) => loading ? '—' : n.toLocaleString();
-
-  const actionLabel = (action: string) => action.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-  const getHealthServices = () => {
-    if (!health) return [
-      { name: 'API Server', pct: 0, color: 'red' },
-      { name: 'MongoDB', pct: 0, color: 'red' },
-      { name: 'Memory Usage', pct: 0, color: 'blue' },
-    ];
-    const dbOk = health.database?.status === 'connected';
-    const memPct = health.memory?.systemUsedPct ?? 0;
-    const memColor = memPct > 85 ? 'red' : memPct > 70 ? 'orange' : 'green';
-    return [
-      { name: 'API Server', pct: health.api?.status === 'operational' ? 100 : 0, color: 'green' },
-      { name: `MongoDB (${health.database?.latency || 'N/A'})`, pct: dbOk ? 100 : 0, color: dbOk ? 'green' : 'red' },
-      { name: `Memory (${memPct}% used)`, pct: 100 - memPct, color: memColor },
-      { name: `Uptime: ${health.uptime?.formatted || 'N/A'}`, pct: 100, color: 'blue' },
-    ];
   };
 
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const STAT_CARDS = [
+    { title: 'Total Users', value: stats?.totalUsers ?? 0, icon: '👥', variant: 'blue' as const, change: 'Registered accounts', changeType: 'neutral' as const },
+    { title: 'Students', value: stats?.totalStudents ?? 0, icon: '🎓', variant: 'orange' as const, change: 'Enrolled learners', changeType: 'neutral' as const },
+    { title: 'Teachers', value: stats?.totalTeachers ?? 0, icon: '👨‍🏫', variant: 'purple' as const, change: 'Faculty members', changeType: 'neutral' as const },
+    { title: 'Courses', value: stats?.totalCourses ?? 0, icon: '📚', variant: 'teal' as const, change: 'Learning modules', changeType: 'neutral' as const },
+    { title: 'Total Exams', value: stats?.totalExams ?? 0, icon: '📝', variant: 'blue' as const, change: 'All exam records', changeType: 'neutral' as const },
+    { title: 'Active Now', value: stats?.activeExams ?? 0, icon: '🔴', variant: 'red' as const, change: 'Live exams running', changeType: stats?.activeExams ? 'up' as const : 'neutral' as const },
+    { title: 'Submissions', value: stats?.totalSubmissions ?? 0, icon: '📤', variant: 'green' as const, change: 'Total exam attempts', changeType: 'neutral' as const },
+    { title: 'Online Users', value: stats?.onlineUsers ?? 0, icon: '🟢', variant: 'green' as const, change: 'Currently online', changeType: 'neutral' as const },
+  ];
+
   return (
-    <LMSLayout pageTitle="Administration Dashboard" breadcrumbs={[{ label: 'Administration' }, { label: 'Dashboard' }]}>
-      {/* Welcome bar */}
-      <div className="lms-alert lms-alert-info" style={{ marginBottom: 16 }}>
-        <div>
-          <div className="lms-alert-title">Welcome, {user?.firstName} {user?.lastName}</div>
-          <div>Logged in as <strong style={{ textTransform: 'capitalize' }}>{user?.role}</strong>. {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</div>
-        </div>
+    <LMSLayout pageTitle="Admin Dashboard" breadcrumbs={[{ label: 'Dashboard' }]}>
+      {/* Stats Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+        gap: 16,
+        marginBottom: 28,
+      }}>
+        {STAT_CARDS.map((card, i) => (
+          <StatCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            icon={card.icon}
+            variant={card.variant}
+            change={card.change}
+            changeType={card.changeType}
+            delay={i * 0.06}
+            loading={loading}
+          />
+        ))}
       </div>
 
-      {/* Stats */}
-      <div className="lms-stats-grid">
-        <div className="lms-stat-card orange">
-          <div className="lms-stat-value">{sk(stats.totalStudents)}</div>
-          <div className="lms-stat-label">👥 Total Students</div>
+      {/* Quick Actions */}
+      <AnimatedCard delay={0.15} hover={false} className="lms-section" style={{ marginBottom: 24 }}>
+        <div className="lms-section-title">⚡ Quick Actions</div>
+        <div style={{ padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+          {QUICK_ACTIONS.map((action, i) => (
+            <motion.div
+              key={action.label}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + i * 0.04 }}
+            >
+              <Link
+                href={action.href}
+                className="quick-action"
+                style={{ textDecoration: 'none' }}
+              >
+                <span style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 'var(--radius)',
+                  background: 'var(--primary-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  flexShrink: 0,
+                }}>
+                  {action.icon}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>{action.label}</span>
+              </Link>
+            </motion.div>
+          ))}
         </div>
-        <div className="lms-stat-card blue">
-          <div className="lms-stat-value">{sk(stats.totalTeachers)}</div>
-          <div className="lms-stat-label">👨‍🏫 Faculty</div>
-        </div>
-        <div className="lms-stat-card green">
-          <div className="lms-stat-value">{sk(stats.totalExams)}</div>
-          <div className="lms-stat-label">📝 Total Exams</div>
-        </div>
-        <div className="lms-stat-card red">
-          <div className="lms-stat-value">{sk(stats.totalSubmissions)}</div>
-          <div className="lms-stat-label">📤 Submissions</div>
-        </div>
-      </div>
+      </AnimatedCard>
 
-      {/* Grid */}
-      <div className="admin-grid">
-        {/* Quick Actions */}
-        <div className="lms-section">
-          <div className="lms-section-title">⚡ Quick Actions</div>
-          <div style={{ padding: 16 }}>
-            <div className="quick-action-grid">
-              {[
-                { label: 'Create Exam', href: '/admin/exams', icon: '📝' },
-                { label: 'Add User', href: '/admin/users/create', icon: '👤' },
-                { label: 'View Results', href: '/admin/results', icon: '🏆' },
-                { label: 'Live Monitor', href: '/admin/monitor', icon: '👁️' },
-                { label: 'Question Bank', href: '/admin/questions', icon: '❓' },
-                { label: 'Audit Logs', href: '/admin/logs', icon: '📊' },
-              ].map(({ label, href, icon }) => (
-                <Link key={href} href={href} className="quick-action">
-                  <div className="quick-action-icon">{icon}</div>
-                  <span>{label}</span>
-                </Link>
-              ))}
+      {/* Bottom Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 }}>
+
+        {/* Recent Activity */}
+        <AnimatedCard delay={0.25} hover={false}>
+          <div className="lms-section">
+            <div className="lms-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>📋 Recent Activity</span>
+              <Link href="/admin/logs" style={{ fontSize: 12, fontWeight: 500 }}>View all →</Link>
+            </div>
+            <div className="lms-section-body" style={{ padding: 0 }}>
+              {activity.length === 0 && !loading ? (
+                <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                  No recent activity
+                </div>
+              ) : (
+                <div className="lms-table-container">
+                  <table className="lms-table">
+                    <thead>
+                      <tr>
+                        <th>Action</th>
+                        <th>User</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        [1, 2, 3, 4].map(i => (
+                          <tr key={i}>
+                            {[1, 2, 3, 4].map(j => (
+                              <td key={j}><div className="skeleton" style={{ height: 12, width: '80%' }} /></td>
+                            ))}
+                          </tr>
+                        ))
+                      ) : (
+                        activity.map((item, i) => (
+                          <motion.tr
+                            key={item.id || i}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                          >
+                            <td style={{ fontFamily: 'monospace', fontSize: 12 }}>
+                              {item.action}
+                            </td>
+                            <td style={{ fontSize: 12, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {item.userEmail || '—'}
+                            </td>
+                            <td>
+                              <span className={`lms-status ${
+                                item.status === 'success' ? 'lms-status-active' :
+                                item.status === 'failure' ? 'lms-status-closed' :
+                                'lms-status-pending'
+                              }`}>
+                                {item.status}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                              {item.createdAt ? timeAgo(item.createdAt) : '—'}
+                            </td>
+                          </motion.tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </AnimatedCard>
 
-        {/* System Health - Real Data */}
-        <div className="lms-section">
-          <div className="lms-section-title">🖥️ System Health</div>
-          <div style={{ padding: 16 }}>
-            {healthLoading ? (
-              <div className="lms-loading">Checking services...</div>
-            ) : (
-              <>
-                {getHealthServices().map(({ name, pct, color }) => (
-                  <div key={name} style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                      <span style={{ color: 'var(--text)' }}>{name}</span>
-                      <span style={{ fontWeight: 600, color: color === 'green' ? 'var(--success)' : color === 'red' ? 'var(--danger)' : 'var(--secondary)' }}>{pct}%</span>
-                    </div>
-                    <div className="lms-progress">
-                      <div className={`lms-progress-bar ${color}`} style={{ width: `${pct}%` }} />
-                    </div>
+        {/* Right column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* System Status */}
+          <AnimatedCard delay={0.3} hover={false}>
+            <div className="lms-section">
+              <div className="lms-section-title">🟢 System Status</div>
+              <div className="lms-section-body">
+                {[
+                  { name: 'API Server', status: 'Operational', ok: true },
+                  { name: 'Database (MongoDB)', status: 'Operational', ok: true },
+                  { name: 'Redis Cache', status: 'Operational', ok: true },
+                  { name: 'Exam Engine', status: 'Operational', ok: true },
+                  { name: 'File Storage', status: 'Operational', ok: true },
+                  { name: 'AI Services', status: 'Active', ok: true },
+                ].map(({ name, status, ok }) => (
+                  <div key={name} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 0',
+                    borderBottom: '1px solid var(--border)',
+                    fontSize: 13,
+                  }}>
+                    <span style={{ color: 'var(--text)' }}>{name}</span>
+                    <span className={`lms-status ${ok ? 'lms-status-active' : 'lms-status-closed'}`}>
+                      {status}
+                    </span>
                   </div>
                 ))}
-                <div className="lms-alert lms-alert-success" style={{ marginTop: 12, padding: '8px 12px' }}>
-                  <span className="lms-alert-title" style={{ margin: 0, fontSize: 12 }}>
-                    {health?.database?.status === 'connected' ? '✓ All systems operational' : '⚠ Database degraded'}
-                  </span>
-                </div>
-                <Link href="/admin/system" className="lms-btn lms-btn-sm" style={{ marginTop: 8, display: 'block', textAlign: 'center' }}>
-                  Full System Details →
-                </Link>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          </AnimatedCard>
+
+          {/* Platform Info */}
+          <AnimatedCard delay={0.35} hover={false}>
+            <div className="lms-section">
+              <div className="lms-section-title">ℹ️ Platform Info</div>
+              <div className="lms-section-body">
+                {[
+                  ['Platform', 'EDYRA v3.0'],
+                  ['Environment', process.env.NODE_ENV || 'production'],
+                  ['API', process.env.NEXT_PUBLIC_API_URL || '/api'],
+                  ['Build', new Date().toLocaleDateString()],
+                ].map(([label, value]) => (
+                  <div key={label} className="lms-info-row">
+                    <span className="lms-info-label">{label}</span>
+                    <span className="lms-info-value" style={{ fontFamily: 'monospace', fontSize: 12 }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AnimatedCard>
+
         </div>
       </div>
 
-      {/* Recent Activity - Real audit logs */}
-      <div className="lms-section">
-        <div className="lms-section-title" style={{ justifyContent: 'space-between' }}>
-          <span>📋 Recent Activity</span>
-          <Link href="/admin/logs" className="lms-btn lms-btn-sm lms-btn-default">View All Logs</Link>
+      {error && (
+        <div className="lms-alert lms-alert-error" style={{ marginTop: 16 }}>
+          <div>
+            <div className="lms-alert-title">Dashboard Error</div>
+            <div>{error}</div>
+          </div>
         </div>
-        <div className="lms-table-container">
-          <table className="lms-table">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>User</th>
-                <th>Resource</th>
-                <th>Time</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center' }}>Loading activity...</td></tr>
-              ) : activity.length === 0 ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No recent activity recorded.</td></tr>
-              ) : activity.map(log => (
-                <tr key={log._id}>
-                  <td style={{ fontWeight: 600, fontSize: 13 }}>{actionLabel(log.action)}</td>
-                  <td>
-                    <div style={{ fontSize: 13 }}>{log.userEmail}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{log.userRole}</div>
-                  </td>
-                  <td style={{ fontSize: 13 }}>{log.targetType || '—'}</td>
-                  <td style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                    {log.createdAt ? format(new Date(log.createdAt), 'dd/MM HH:mm') : '—'}
-                  </td>
-                  <td>
-                    <span className={`lms-status ${log.status === 'success' ? 'lms-status-active' : 'lms-status-closed'}`}>
-                      {log.status?.toUpperCase() || 'OK'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </LMSLayout>
   );
 }

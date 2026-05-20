@@ -79,29 +79,66 @@ const config = {
   /* ---------------- Logging ---------------- */
   logging: {
     level: process.env.LOG_LEVEL || 'info',
-    file: process.env.LOG_FILE || null, // ❗ no file logging on Vercel
+    file: process.env.LOG_FILE || null,
   },
 
   /* ---------------- Autosave ---------------- */
   autosave: {
-    interval:
-      Number(process.env.AUTOSAVE_INTERVAL) || 5000,
+    interval: Number(process.env.AUTOSAVE_INTERVAL) || 5000,
   },
 
   /* ---------------- Violations ---------------- */
   violations: {
-    maxWarning:
-      Number(process.env.MAX_VIOLATIONS_WARNING) || 3,
-    maxSubmit:
-      Number(process.env.MAX_VIOLATIONS_SUBMIT) || 5,
+    maxWarning: Number(process.env.MAX_VIOLATIONS_WARNING) || 3,
+    maxSubmit: Number(process.env.MAX_VIOLATIONS_SUBMIT) || 5,
   },
 
   /* ---------------- Exam ---------------- */
   exam: {
-    defaultDuration:
-      Number(process.env.DEFAULT_EXAM_DURATION) || 180,
-    maxDuration:
-      Number(process.env.MAX_EXAM_DURATION) || 480,
+    defaultDuration: Number(process.env.DEFAULT_EXAM_DURATION) || 180,
+    maxDuration: Number(process.env.MAX_EXAM_DURATION) || 480,
+  },
+
+  /* ---------------- Email (SMTP) ---------------- */
+  email: {
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '"EDYRA LMS" <noreply@edyra.com>',
+  },
+
+  /* ---------------- Storage / Uploads ---------------- */
+  storage: {
+    provider: process.env.STORAGE_PROVIDER || 'local', // 'local' | 's3' | 'r2'
+    uploadDir: process.env.UPLOAD_DIR || (process.env.VERCEL ? '/tmp/uploads' : './uploads'),
+    maxFileSize: Number(process.env.MAX_FILE_SIZE) || 20 * 1024 * 1024,
+    cdnUrl: process.env.CDN_URL || '',
+    s3: {
+      bucket: process.env.AWS_S3_BUCKET || '',
+      region: process.env.AWS_REGION || 'ap-south-1',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    },
+  },
+
+  /* ---------------- Frontend URL ---------------- */
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+
+  /* ---------------- Google OAuth ---------------- */
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/oauth/google/callback',
+  },
+
+  /* ---------------- AI ---------------- */
+  ai: {
+    enabled: process.env.AI_ENABLED !== 'false',
+    ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
+    model: process.env.AI_MODEL || 'llama3',
+    openaiKey: process.env.OPENAI_API_KEY || '',
   },
 };
 

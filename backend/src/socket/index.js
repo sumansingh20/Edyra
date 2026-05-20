@@ -1,129 +1,197 @@
-import { Server } from 'socket.io';
-import jwt from 'jsonwebtoken';
-import config from '../config/index.js';
-import { User, Notification, ExamSession } from '../models/index.js';
+import { setupExamSocket } from './examMonitorSocket.js';
+import { setupExamLiveSocket } from './examSocket.js';
 import { setupCollaborationSocket } from './collaborationSocket.js';
+import { pushNotification } from '../config/redis.js';
 
-export const initializeSocket = (httpServer) => {
-  const io = new Server(httpServer, {
-    cors: {
-      origin: config.corsOrigin,
-      methods: ['GET', 'POST'],
-      credentials: true
-    }
-  });
+/* ========== CONNECTED USERS MAP ========== */
+// userId -> Set of socket IDs
+const connectedUsers = new Map();
 
-  // Authentication Middleware
-  io.use(async (socket, next) => {
-    try {
-      const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
-      if (!token) {
-        return next(new Error('Authentication error: Token missing'));
+const addUserSocket = (userId, socketId) => {
+  if (!connectedUsers.has(userId)) connectedUsers.set(userId, new Set());
+  connectedUsers.get(userId).add(socketId);
+};
+
+const removeUserSocket = (userId, socketId) => {
+  const sockets = connectedUsers.get(userId);
+  if (sockets) {
+    sockets.delete(socketId);
+    if (sockets.size === 0) connectedUsers.delete(userId);
+  }
+};
+
+export const getOnlineUserCount = () => connectedUsers.size;
+export const isUserOnline = (userId) => connectedUsers.has(userId?.toString());
+
+/* ========== EMIT NOTIFICATION TO USER ========== */
+export let globalIo = null;
+
+export const emitToUser = (io, userId, event, data) => {
+  const uid = userId?.toString();
+  if (!uid || !io) return;
+  io.to(`user:${uid}`).emit(event, data);
+};
+
+export const emitToRole = (io, role, event, data) => {
+  if (!role || !io) return;
+  io.to(`role:${role}`).emit(event, data);
+};
+
+export const emitToAll = (io, event, data) => {
+  if (!io) return;
+  io.emit(event, data);
+};
+
+/* ========== NOTIFICATION BROADCASTER ========== */
+export const broadcastNotification = async (io, { userIds, roles, data, saveToRedis = true }) => {
+  if (!io) return;
+  
+  const notification = {
+    ...data,
+    id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: new Date().toISOString(),
+    read: false,
+  };
+
+  // Emit to specific users
+  if (userIds && userIds.length > 0) {
+    for (const userId of userIds) {
+      io.to(`user:${userId}`).emit('notification:new', notification);
+      if (saveToRedis) {
+        await pushNotification(userId, notification).catch(() => {});
       }
-      
-      const decoded = jwt.verify(token, config.jwt.accessSecret);
-      const user = await User.findById(decoded.id || decoded.userId).select('role firstName lastName isActive');
-      
-      if (!user || !user.isActive) {
-        return next(new Error('Authentication error: User invalid'));
-      }
-      
-      socket.user = user;
-      next();
-    } catch (err) {
-      next(new Error('Authentication error: Invalid Token'));
     }
-  });
+  }
 
-  // Room tracking
-  const userSockets = new Map(); // userId -> Set of socketIds
+  // Emit to role rooms
+  if (roles && roles.length > 0) {
+    for (const role of roles) {
+      io.to(`role:${role}`).emit('notification:new', notification);
+    }
+  }
+};
 
+/* ========== MAIN SOCKET SETUP ========== */
+export const setupSockets = (io) => {
+  globalIo = io;
+
+  /* ── MAIN NAMESPACE ── */
   io.on('connection', (socket) => {
-    const userId = socket.user._id.toString();
-    console.log(`[Socket.io] User connected: ${userId} (${socket.user.role})`);
+    const userId = socket.handshake.auth?.userId || socket.handshake.query?.userId;
+    const userRole = socket.handshake.auth?.role || socket.handshake.query?.role;
 
-    // Track user's sockets
-    if (!userSockets.has(userId)) {
-      userSockets.set(userId, new Set());
+    if (userId) {
+      // Join user-specific room
+      socket.join(`user:${userId}`);
+      addUserSocket(userId, socket.id);
+
+      // Join role room
+      if (userRole) {
+        socket.join(`role:${userRole}`);
+      }
+
+      console.log(`[SOCKET] User ${userId} connected (${socket.id}). Online: ${connectedUsers.size}`);
+
+      // Broadcast updated online count to admins
+      io.to('role:admin').to('role:super-admin').emit('system:online-count', {
+        count: connectedUsers.size,
+        timestamp: new Date().toISOString(),
+      });
     }
-    userSockets.get(userId).add(socket.id);
 
-    // Join common rooms based on role
-    socket.join(`role:${socket.user.role}`);
-    socket.join(`user:${userId}`);
+    /* ── NOTIFICATION EVENTS ── */
+    socket.on('notification:read', (data) => {
+      // Client marks notification as read
+      socket.emit('notification:read:ack', { id: data.id, read: true });
+    });
 
-    // EXAM EVENTS
-    socket.on('exam:join_session', async (data) => {
-      const { sessionId, examId } = data;
-      socket.join(`exam:${examId}`);
-      socket.join(`session:${sessionId}`);
-      
-      // Notify proctors
-      if (socket.user.role === 'student') {
-        io.to(`exam_proctor:${examId}`).emit('proctor:student_joined', {
-          userId,
-          sessionId,
-          name: `${socket.user.firstName} ${socket.user.lastName}`,
-          timestamp: new Date()
+    socket.on('notification:read-all', () => {
+      socket.emit('notification:read-all:ack', { success: true });
+    });
+
+    /* ── ANNOUNCEMENT BROADCAST ── */
+    // Teacher/Admin broadcasts an announcement to all students
+    socket.on('announcement:broadcast', (data) => {
+      const { message, targetRole, targetCourse } = data;
+      if (targetRole) {
+        io.to(`role:${targetRole}`).emit('announcement:new', {
+          message,
+          from: userId,
+          targetCourse,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        io.emit('announcement:new', {
+          message,
+          from: userId,
+          timestamp: new Date().toISOString(),
         });
       }
     });
 
-    socket.on('exam:violation', async (data) => {
-      const { sessionId, examId, violationType, description } = data;
-      // Emit to exam proctors
-      io.to(`exam_proctor:${examId}`).emit('proctor:violation_alert', {
+    /* ── LIVE CLASSROOM ── */
+    socket.on('classroom:join', ({ courseId }) => {
+      socket.join(`classroom:${courseId}`);
+      socket.to(`classroom:${courseId}`).emit('classroom:participant-joined', {
         userId,
-        sessionId,
-        name: `${socket.user.firstName} ${socket.user.lastName}`,
-        violationType,
-        description,
-        timestamp: new Date()
+        socketId: socket.id,
+        timestamp: new Date().toISOString(),
       });
     });
 
-    socket.on('exam:join_proctor', (data) => {
-      if (['admin', 'super-admin', 'teacher', 'invigilator'].includes(socket.user.role)) {
-        socket.join(`exam_proctor:${data.examId}`);
-      }
-    });
-    
-    // CHAT & CLASSROOM EVENTS
-    socket.on('chat:join_room', (data) => {
-      socket.join(`chat:${data.roomId}`);
+    socket.on('classroom:leave', ({ courseId }) => {
+      socket.leave(`classroom:${courseId}`);
+      socket.to(`classroom:${courseId}`).emit('classroom:participant-left', {
+        userId,
+        socketId: socket.id,
+      });
     });
 
-    socket.on('chat:send_message', (data) => {
-      const { roomId, message, type } = data;
-      io.to(`chat:${roomId}`).emit('chat:receive_message', {
-        sender: {
-          id: userId,
-          name: `${socket.user.firstName} ${socket.user.lastName}`,
-          role: socket.user.role
-        },
+    socket.on('classroom:message', ({ courseId, message }) => {
+      io.to(`classroom:${courseId}`).emit('classroom:message', {
+        userId,
         message,
-        type: type || 'text',
-        timestamp: new Date()
+        timestamp: new Date().toISOString(),
       });
     });
 
-    // Setup enterprise collaboration and WebRTC handlers
-    setupCollaborationSocket(io, socket);
+    /* ── TYPING INDICATOR ── */
+    socket.on('typing:start', ({ roomId }) => {
+      socket.to(roomId).emit('typing:user', { userId, typing: true });
+    });
+    socket.on('typing:stop', ({ roomId }) => {
+      socket.to(roomId).emit('typing:user', { userId, typing: false });
+    });
 
-    // Handle Disconnect
+    /* ── DISCONNECT ── */
     socket.on('disconnect', () => {
-      console.log(`[Socket.io] User disconnected: ${userId}`);
-      if (userSockets.has(userId)) {
-        userSockets.get(userId).delete(socket.id);
-        if (userSockets.get(userId).size === 0) {
-          userSockets.delete(userId);
-          // Can emit offline status here if needed
-        }
+      if (userId) {
+        removeUserSocket(userId, socket.id);
+        console.log(`[SOCKET] User ${userId} disconnected. Online: ${connectedUsers.size}`);
+        io.to('role:admin').to('role:super-admin').emit('system:online-count', {
+          count: connectedUsers.size,
+          timestamp: new Date().toISOString(),
+        });
       }
     });
   });
 
+  /* ── EXAM MONITOR NAMESPACE ── */
+  try {
+    setupExamSocket(io);
+  } catch (e) {
+    console.warn('[SOCKET] Exam socket setup failed:', e.message);
+  }
+
+  /* ── COLLABORATION NAMESPACE ── */
+  try {
+    setupCollaborationSocket(io);
+  } catch (e) {
+    console.warn('[SOCKET] Collaboration socket setup failed:', e.message);
+  }
+
+  console.log('[SOCKET.IO] All namespaces initialized');
   return io;
 };
 
-export default initializeSocket;
+export default setupSockets;

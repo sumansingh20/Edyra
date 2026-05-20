@@ -2,11 +2,20 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
+import morgan from 'morgan';
 import { createServer } from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import connectDB from './config/database.js';
 import routes from './routes/index.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import User from './models/User.js';
+import { sanitizeInput, xssClean } from './middleware/security.js';
+import { getUploadsBaseDir } from './utils/storage.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -97,10 +106,18 @@ app.use((req, res, next) => {
 });
 
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(compression());
+app.use(sanitizeInput);
+app.use(xssClean);
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
+/* ========== STATIC FILE SERVING (uploads) ========== */
+app.use('/uploads', express.static(getUploadsBaseDir()));
 
 /* ========== HEALTH CHECK (NO DB REQUIRED) ========== */
 app.get('/', (req, res) => {
@@ -170,6 +187,7 @@ app.use(async (req, res, next) => {
 
 /* ========== API ROUTES ========== */
 app.use('/api', routes);
+app.use('/api/upload', uploadRoutes);
 
 /* ========== 404 HANDLER ========== */
 app.use((req, res) => {
@@ -226,6 +244,14 @@ const PORT = process.env.PORT || 5000;
 // Only start server if NOT running on Vercel (serverless)
 if (!process.env.VERCEL) {
   const httpServer = createServer(app);
+
+  // Connect to DB on startup to support background jobs
+  try {
+    await initializeDB();
+    console.log('[DB] Database connected successfully on startup');
+  } catch (err) {
+    console.error('[DB] Startup database connection failed:', err.message);
+  }
 
   // Initialize Socket.IO for real-time monitoring
   try {

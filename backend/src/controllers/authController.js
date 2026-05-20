@@ -3,6 +3,7 @@ import config from '../config/index.js';
 import AppError from '../utils/AppError.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { sendWelcomeEmail, sendEmailVerification, sendPasswordReset } from '../utils/email.js';
 
 /* ========== SESSION CONFIGURATION ========== */
 const SESSION_COOKIE_NAME = 'edyra_session';
@@ -138,9 +139,23 @@ export const register = async (req, res, next) => {
       console.warn('[AUDIT] Log failed:', e.message);
     }
 
+    // Send welcome email + verification
+    try {
+      await sendWelcomeEmail(user);
+      // Send verification email
+      const verifyToken = crypto.randomBytes(32).toString('hex');
+      const hashedVerifyToken = crypto.createHash('sha256').update(verifyToken).digest('hex');
+      user.emailVerificationToken = hashedVerifyToken;
+      user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+      await user.save({ validateBeforeSave: false });
+      await sendEmailVerification(user, verifyToken);
+    } catch (emailErr) {
+      console.warn('[REGISTER] Email failed (non-fatal):', emailErr.message);
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Please login.',
+      message: 'Registration successful. Please check your email to verify your account.',
     });
   } catch (error) {
     next(error);
@@ -648,30 +663,24 @@ export const forgotPassword = async (req, res, next) => {
     user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
     await user.save({ validateBeforeSave: false });
 
+    // Send real password reset email
     try {
-      await AuditLog.log({
-        user: user._id,
-        userEmail: user.email,
-        userRole: user.role,
-        action: 'password-reset-requested',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        status: 'success',
-        details: { tokenExpiry: user.passwordResetExpires },
-      });
-    } catch (e) {
-      console.warn('[AUDIT] Log failed:', e.message);
+      await sendPasswordReset(user, resetToken);
+    } catch (emailErr) {
+      // Rollback token if email fails
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      throw new AppError('Failed to send password reset email. Please try again later.', 500);
     }
 
-    // In production, send email with reset link containing resetToken
-    // For now, log the token in development
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[DEV] Password reset token for ${email}: ${resetToken}`);
     }
 
     res.json({
       success: true,
-      message: 'If an account with that email exists, a password reset link has been sent.',
+      message: 'Password reset link has been sent to your email.',
       ...(process.env.NODE_ENV !== 'production' && { devToken: resetToken }),
     });
   } catch (error) {
@@ -733,8 +742,14 @@ export const requestEmailVerification = async (req, res, next) => {
 
     const verifyToken = crypto.randomBytes(32).toString('hex');
     user.emailVerificationToken = crypto.createHash('sha256').update(verifyToken).digest('hex');
-    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
+
+    try {
+      await sendEmailVerification(user, verifyToken);
+    } catch (emailErr) {
+      console.warn('[EMAIL] Verification send failed:', emailErr.message);
+    }
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[DEV] Email verification token for ${user.email}: ${verifyToken}`);
@@ -775,6 +790,28 @@ export const verifyEmail = async (req, res, next) => {
   }
 };
 
+/* ========== UPLOAD AVATAR ========== */
+export const uploadAvatar = async (req, res, next) => {
+  try {
+    const { avatarUrl } = req.body;
+    if (!avatarUrl) throw new AppError('Avatar URL is required', 400);
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: avatarUrl, profileImage: avatarUrl },
+      { new: true }
+    ).select('-password');
+
+    res.json({
+      success: true,
+      message: 'Avatar updated successfully',
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   register,
   login,
@@ -786,6 +823,7 @@ export default {
   getServerTime,
   changePassword,
   updateProfile,
+  uploadAvatar,
   forgotPassword,
   resetPassword,
   requestEmailVerification,

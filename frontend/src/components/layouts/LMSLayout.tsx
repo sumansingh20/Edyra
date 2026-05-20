@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import DarkModeToggle from '@/components/common/DarkModeToggle';
+import NotificationPanel from '@/components/common/NotificationPanel';
 
 interface LMSLayoutProps {
   children: React.ReactNode;
@@ -155,7 +157,13 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
         <div className="lms-header-right">
           <LiveClock />
 
-          {/* User menu */}
+          {/* Notification Bell */}
+          <NotificationPanel />
+
+          {/* Dark Mode Toggle */}
+          <DarkModeToggle />
+
+          {/* User avatar + menu */}
           <div style={{ position: 'relative' }}>
             <div
               className="lms-user-avatar"
@@ -166,51 +174,49 @@ export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayou
             </div>
             {userMenuOpen && (
               <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: 6,
-                background: '#fff', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-md)',
-                minWidth: 200, zIndex: 200,
+                position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+                background: 'var(--card-bg)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)',
+                minWidth: 220, zIndex: 200, overflow: 'hidden',
               }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: '#f8f9fa' }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--nav-bg)' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>
                     {user.firstName} {user.lastName}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                     {user.email}
                   </div>
-                  <div style={{ marginTop: 4 }}>
+                  <div style={{ marginTop: 6 }}>
                     <span className="lms-status lms-status-info" style={{ fontSize: 10 }}>{user.role}</span>
                   </div>
                 </div>
                 <Link
                   href={`/${user.role === 'student' ? 'student' : user.role === 'teacher' ? 'faculty' : 'admin'}/profile`}
                   onClick={() => setUserMenuOpen(false)}
-                  style={{ display: 'block', padding: '10px 16px', fontSize: 13, color: 'var(--text)', borderBottom: '1px solid #f0f2f4' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', fontSize: 13, color: 'var(--text)', borderBottom: '1px solid var(--border)' }}
                 >
-                  👤 My Profile
+                  <span>👤</span> My Profile
                 </Link>
                 <Link
                   href={`/${user.role === 'student' ? 'student' : user.role === 'teacher' ? 'faculty' : 'admin'}/notifications`}
                   onClick={() => setUserMenuOpen(false)}
-                  style={{ display: 'block', padding: '10px 16px', fontSize: 13, color: 'var(--text)', borderBottom: '1px solid #f0f2f4' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', fontSize: 13, color: 'var(--text)', borderBottom: '1px solid var(--border)' }}
                 >
-                  🔔 Notifications
+                  <span>🔔</span> Notifications
                 </Link>
                 <button
                   onClick={() => { setUserMenuOpen(false); handleLogout(); }}
                   style={{
-                    display: 'block', width: '100%', textAlign: 'left',
-                    padding: '10px 16px', fontSize: 13, color: 'var(--danger)',
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+                    padding: '11px 16px', fontSize: 13, color: 'var(--danger)',
                     background: 'none', border: 'none', cursor: 'pointer',
                   }}
                 >
-                  🚪 Sign Out
+                  <span>🚪</span> Sign Out
                 </button>
               </div>
             )}
           </div>
-
-          <button className="lms-logout-btn" onClick={handleLogout}>Log out</button>
         </div>
       </header>
 
