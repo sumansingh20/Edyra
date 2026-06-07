@@ -14,7 +14,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import { sanitizeInput, xssClean } from './middleware/security.js';
 import { getUploadsBaseDir } from './utils/storage.js';
 
-const __filename = fileURLToPath(import.meta.url);
+
 
 
 const app = express();
