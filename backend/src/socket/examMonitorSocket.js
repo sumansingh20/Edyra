@@ -3,7 +3,6 @@ import ExamBatch from '../models/ExamBatch.js';
 import Exam from '../models/Exam.js';
 import Violation from '../models/Violation.js';
 
-
 // Map violation types to severity levels
 const getViolationSeverity = (type) => {
   const severityMap = {

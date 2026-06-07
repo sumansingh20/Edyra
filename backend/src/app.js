@@ -14,9 +14,6 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import { sanitizeInput, xssClean } from './middleware/security.js';
 import { getUploadsBaseDir } from './utils/storage.js';
 
-
-
-
 const app = express();
 
 /* ========== CRITICAL: ERROR JSON RESPONSE ========== */
