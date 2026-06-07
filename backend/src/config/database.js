@@ -36,12 +36,12 @@ const connectDB = async () => {
     cached.promise = mongoose
       .connect(process.env.MONGODB_URI, options)
       .then((mongooseInstance) => {
-        // console.log('[DB] MongoDB connected successfully');
+        console.log('[DB] MongoDB connected successfully');
         return mongooseInstance;
       })
       .catch((err) => {
         cached.promise = null;
-        // console.error('[DB] MongoDB connection failed:', err.message);
+        console.error('[DB] MongoDB connection failed:', err.message);
         throw err;
       });
   }

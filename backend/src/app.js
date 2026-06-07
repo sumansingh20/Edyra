@@ -161,7 +161,7 @@ const initializeDB = async () => {
     return true;
   } catch (err) {
     dbError = err;
-    // console.error('[DB] Initialization failed:', err.message);
+    console.error('[DB] Initialization failed:', err.message);
     throw err;
   }
 };
@@ -192,8 +192,8 @@ app.use((req, res) => {
 
 /* ========== ERROR HANDLER ========== */
 app.use((err, req, res, next) => {
-  // console.error('[ERROR]', err.message);
-  // console.error('[STACK]', err.stack);
+  console.error('[ERROR]', err.message);
+  console.error('[STACK]', err.stack);
 
   let status = err.statusCode || err.status || 500;
   let message = err.message || 'Internal server error';
@@ -244,9 +244,9 @@ if (!process.env.VERCEL) {
   // Connect to DB on startup to support background jobs
   try {
     await initializeDB();
-    // console.log('[DB] Database connected successfully on startup');
+    console.log('[DB] Database connected successfully on startup');
   } catch (err) {
-    // console.error('[DB] Startup database connection failed:', err.message);
+    console.error('[DB] Startup database connection failed:', err.message);
   }
 
   // Initialize Socket.IO for real-time monitoring
@@ -265,30 +265,30 @@ if (!process.env.VERCEL) {
     });
 
     setupExamSocket(io);
-    // console.log('[SOCKET.IO] Real-time monitoring initialized');
+    console.log('[SOCKET.IO] Real-time monitoring initialized');
   } catch (socketErr) {
-    // console.warn('[SOCKET.IO] Failed to initialize:', socketErr.message);
+    console.warn('[SOCKET.IO] Failed to initialize:', socketErr.message);
   }
 
   httpServer.listen(PORT, '0.0.0.0', () => {
-    // console.log(`[SERVER] Edyra Academic LMS API running on port ${PORT}`);
-    // console.log(`[SERVER] Environment: ${process.env.NODE_ENV || 'development'}`);
-    // console.log(`[SERVER] Health check: http://localhost:${PORT}/api/health`);
+    console.log(`[SERVER] Edyra Academic LMS API running on port ${PORT}`);
+    console.log(`[SERVER] Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`[SERVER] Health check: http://localhost:${PORT}/api/health`);
   });
 
   // Error handling
   httpServer.on('error', (err) => {
-    // console.error('[SERVER ERROR]', err);
+    console.error('[SERVER ERROR]', err);
     process.exit(1);
   });
 
   process.on('SIGTERM', () => {
-    // console.log('[SERVER] SIGTERM received, shutting down...');
+    console.log('[SERVER] SIGTERM received, shutting down...');
     httpServer.close(() => process.exit(0));
   });
 
   process.on('SIGINT', () => {
-    // console.log('[SERVER] SIGINT received, shutting down...');
+    console.log('[SERVER] SIGINT received, shutting down...');
     httpServer.close(() => process.exit(0));
   });
 }

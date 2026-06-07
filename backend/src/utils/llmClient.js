@@ -35,11 +35,11 @@ export const generateText = async (prompt, systemInstruction = 'You are a helpfu
       return response.data.choices[0].message.content;
     } else {
       // Fallback for when API keys are not configured but real implementation is required
-      // console.warn('No AI API key or Ollama configured. Falling back to local heuristic generation.');
+      console.warn('No AI API key or Ollama configured. Falling back to local heuristic generation.');
       return null;
     }
   } catch (error) {
-    // console.error('LLM API Error:', error?.response?.data || error.message);
+    console.error('LLM API Error:', error?.response?.data || error.message);
     throw new Error('Failed to generate AI response');
   }
 };
@@ -63,7 +63,7 @@ export const generateEmbeddings = async (text) => {
     });
     return response.data.data[0].embedding;
   } catch (error) {
-    // console.error('Embeddings API Error:', error?.response?.data || error.message);
+    console.error('Embeddings API Error:', error?.response?.data || error.message);
     return null;
   }
 };
