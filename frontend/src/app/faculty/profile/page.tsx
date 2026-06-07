@@ -24,7 +24,7 @@ function FacultyProfileContent() {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        phone: (user as any).phone || '',
+        phone: (user as any)?.phone || '',
       });
     }
   }, [user]);

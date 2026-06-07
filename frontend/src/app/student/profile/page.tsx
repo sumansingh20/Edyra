@@ -22,7 +22,7 @@ export default function StudentProfilePage() {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        phoneNumber: (user as any).phoneNumber || '',
+        phoneNumber: (user as any)?.phoneNumber || '',
       });
     }
   }, [user]);

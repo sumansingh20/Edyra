@@ -31,7 +31,7 @@ export default function ProfilePage() {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
-        studentId: (user as any).studentId || '',
+        studentId: (user as any)?.studentId || '',
       });
     }
   }, [user]);
@@ -115,7 +115,7 @@ export default function ProfilePage() {
               <div className="profile-meta">
                 <span className="profile-role-badge">{user?.role?.toUpperCase()}</span>
                 {(user as any)?.studentId && (
-                  <span className="profile-id-badge">ID: {(user as any).studentId}</span>
+                  <span className="profile-id-badge">ID: {(user as any)?.studentId}</span>
                 )}
               </div>
             </div>
@@ -172,7 +172,7 @@ export default function ProfilePage() {
                         <button type="submit" disabled={isSubmitting} className="lms-btn lms-btn-success">
                           {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </button>
-                        <button type="button" onClick={() => { setIsEditing(false); if (user) setFormData({ firstName: user.firstName || '', lastName: user.lastName || '', email: user.email || '', studentId: (user as any).studentId || '' }); }} className="lms-btn">
+                        <button type="button" onClick={() => { setIsEditing(false); if (user) setFormData({ firstName: user.firstName || '', lastName: user.lastName || '', email: user.email || '', studentId: (user as any)?.studentId || '' }); }} className="lms-btn">
                           Cancel
                         </button>
                       </div>
@@ -198,13 +198,13 @@ export default function ProfilePage() {
                       {(user as any)?.studentId && (
                         <div className="lms-info-row">
                           <div className="lms-info-label">Student ID</div>
-                          <div className="lms-info-value font-mono">{(user as any).studentId}</div>
+                          <div className="lms-info-value font-mono">{(user as any)?.studentId}</div>
                         </div>
                       )}
                       {(user as any)?.employeeId && (
                         <div className="lms-info-row">
                           <div className="lms-info-label">Employee ID</div>
-                          <div className="lms-info-value font-mono">{(user as any).employeeId}</div>
+                          <div className="lms-info-value font-mono">{(user as any)?.employeeId}</div>
                         </div>
                       )}
                     </>
