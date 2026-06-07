@@ -10,7 +10,6 @@ import { fileURLToPath } from 'url';
 import connectDB from './config/database.js';
 import routes from './routes/index.js';
 import uploadRoutes from './routes/uploadRoutes.js';
-
 import { sanitizeInput, xssClean } from './middleware/security.js';
 import { getUploadsBaseDir } from './utils/storage.js';
 
