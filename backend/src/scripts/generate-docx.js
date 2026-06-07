@@ -460,9 +460,9 @@ function createDocumentationDOCX() {
 
   Packer.toBuffer(doc).then((buffer) => {
     fs.writeFileSync(outputPath, buffer);
-    // console.log(`Successfully generated exhaustive enterprise documentation DOCX at: ${outputPath}`);
+    console.log(`Successfully generated exhaustive enterprise documentation DOCX at: ${outputPath}`);
   }).catch((err) => {
-    // console.error("Error generating DOCX:", err);
+    console.error("Error generating DOCX:", err);
   });
 }
 

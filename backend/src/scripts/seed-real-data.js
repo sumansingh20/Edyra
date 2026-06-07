@@ -18,12 +18,12 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/edyra'
 
 async function seedData() {
   try {
-    // console.log('🔌 Connecting to MongoDB...');
+    console.log('🔌 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
-    // console.log('✅ Connected to MongoDB.');
+    console.log('✅ Connected to MongoDB.');
 
     // 1. Clear Existing Data (Pruning any demo or legacy artifacts)
-    // console.log('🗑️ Clearing collections...');
+    console.log('🗑️ Clearing collections...');
     const collectionsToClear = [
       User, Course, CourseModule, CourseLesson, UserProgress,
       Assignment, AssignmentSubmission, Exam, Question, Submission,
@@ -34,10 +34,10 @@ async function seedData() {
     for (const model of collectionsToClear) {
       await model.deleteMany({});
     }
-    // console.log('✅ Collections cleared.');
+    console.log('✅ Collections cleared.');
 
     // 2. Create Users
-    // console.log('👤 Creating users...');
+    console.log('👤 Creating users...');
     
     // Administrator
     const adminUser = await User.create({
@@ -117,10 +117,10 @@ async function seedData() {
       isActive: true,
     });
 
-    // console.log('✅ Users created.');
+    console.log('✅ Users created.');
 
     // 3. Create Courses
-    // console.log('📚 Creating courses...');
+    console.log('📚 Creating courses...');
     
     const courseDSA = await Course.create({
       title: 'Data Structures and Algorithms',
@@ -162,10 +162,10 @@ async function seedData() {
       }
     });
 
-    // console.log('✅ Courses created.');
+    console.log('✅ Courses created.');
 
     // 4. Create Modules and Lessons
-    // console.log('📂 Creating course modules and lessons...');
+    console.log('📂 Creating course modules and lessons...');
     
     // DSA Modules
     const module1DSA = await CourseModule.create({
@@ -217,10 +217,10 @@ async function seedData() {
       isPublished: true,
     });
 
-    // console.log('✅ Modules and Lessons created.');
+    console.log('✅ Modules and Lessons created.');
 
     // 5. User Progress
-    // console.log('📈 Seeding user progress...');
+    console.log('📈 Seeding user progress...');
     await UserProgress.create({
       userId: studentAlex._id,
       currentStreak: 5,
@@ -242,7 +242,7 @@ async function seedData() {
     });
 
     // 6. Create Assignments and Submissions
-    // console.log('📝 Creating assignments and submissions...');
+    console.log('📝 Creating assignments and submissions...');
     
     const assignment1 = await Assignment.create({
       title: 'Singly Linked List Implementation',
@@ -309,10 +309,10 @@ async function seedData() {
       status: 'submitted',
     });
 
-    // console.log('✅ Assignments and Submissions created.');
+    console.log('✅ Assignments and Submissions created.');
 
     // 7. Create Exams
-    // console.log('🏁 Creating exams...');
+    console.log('🏁 Creating exams...');
     
     // Exam 1: Midterm Exam (Completed 2 days ago)
     const examMidterm = await Exam.create({
@@ -363,10 +363,10 @@ async function seedData() {
       publishedBy: teacherUser._id,
     });
 
-    // console.log('✅ Exams created.');
+    console.log('✅ Exams created.');
 
     // 8. Create Exam Questions
-    // console.log('❓ Creating exam questions...');
+    console.log('❓ Creating exam questions...');
     
     // MCQ helper
     const saveQuestionWithCorrectOptions = async (examId, num, text, marks, optionsData, explanation) => {
@@ -459,10 +459,10 @@ async function seedData() {
       'Merge Sort requires an auxiliary array of size n to merge the subarrays.'
     );
 
-    // console.log('✅ Exam questions created.');
+    console.log('✅ Exam questions created.');
 
     // 9. Seeding Student Submissions & Violations (for completed exam)
-    // console.log('📥 Seeding student exam submissions...');
+    console.log('📥 Seeding student exam submissions...');
     
     // Alex's Submission
     const submissionAlex = await Submission.create({
@@ -517,10 +517,10 @@ async function seedData() {
       timestamp: new Date(examMidterm.startTime.getTime() + 25 * 60 * 1000),
     });
 
-    // console.log('✅ Exam submissions and violations seeded.');
+    console.log('✅ Exam submissions and violations seeded.');
 
     // 10. Gradebook Grades
-    // console.log('📊 Seeding student grades...');
+    console.log('📊 Seeding student grades...');
     const gradeDSA = new Grade({
       student: studentAlex._id,
       course: courseDSA._id,
@@ -538,10 +538,10 @@ async function seedData() {
     gradeDSA.calculateTotal();
     await gradeDSA.save();
 
-    // console.log('✅ Grades seeded.');
+    console.log('✅ Grades seeded.');
 
     // 11. Attendance
-    // console.log('📅 Seeding attendance logs...');
+    console.log('📅 Seeding attendance logs...');
     
     // Day 1 Attendance
     const attendanceDay1 = new Attendance({
@@ -575,10 +575,10 @@ async function seedData() {
     attendanceDay2.calculateTotals();
     await attendanceDay2.save();
 
-    // console.log('✅ Attendance logs seeded.');
+    console.log('✅ Attendance logs seeded.');
 
     // 12. Timetable
-    // console.log('📅 Seeding timetable...');
+    console.log('📅 Seeding timetable...');
     await Timetable.create({
       name: 'B.Tech CSE - Semester 4 Timetable',
       department: 'Computer Science',
@@ -594,10 +594,10 @@ async function seedData() {
         { day: 'thursday', startTime: '09:00', endTime: '10:30', course: coursePhysics._id, instructor: teacherUser._id, room: 'PH-302', type: 'lecture' },
       ]
     });
-    // console.log('✅ Timetable seeded.');
+    console.log('✅ Timetable seeded.');
 
     // 13. ERP - Admissions
-    // console.log('🏛️ Seeding admissions data...');
+    console.log('🏛️ Seeding admissions data...');
     await Admission.create({
       applicantName: 'Rohan Sharma',
       email: 'rohan.sharma@gmail.com',
@@ -623,10 +623,10 @@ async function seedData() {
       reviewedBy: adminUser._id,
     });
 
-    // console.log('✅ Admissions seeded.');
+    console.log('✅ Admissions seeded.');
 
     // 14. ERP - Fees
-    // console.log('💰 Seeding fees...');
+    console.log('💰 Seeding fees...');
     await Fee.create({
       student: studentAlex._id,
       academicYear: '2025-2026',
@@ -656,10 +656,10 @@ async function seedData() {
       createdBy: adminUser._id,
     });
 
-    // console.log('✅ Fees seeded.');
+    console.log('✅ Fees seeded.');
 
     // 15. ERP - Library Books
-    // console.log('📖 Seeding library catalog...');
+    console.log('📖 Seeding library catalog...');
     await LibraryBook.create({
       title: 'Introduction to Algorithms',
       author: 'Cormen, Leiserson, Rivest, Stein',
@@ -691,10 +691,10 @@ async function seedData() {
       location: { shelf: 'P-1', row: '1', section: 'Reference' }
     });
 
-    // console.log('✅ Library catalog seeded.');
+    console.log('✅ Library catalog seeded.');
 
     // 16. ERP - Hostel Rooms
-    // console.log('🏠 Seeding hostels...');
+    console.log('🏠 Seeding hostels...');
     await HostelRoom.create({
       hostelName: 'Ramanujan Boys Hostel',
       roomNumber: '101',
@@ -724,10 +724,10 @@ async function seedData() {
       ]
     });
 
-    // console.log('✅ Hostel rooms seeded.');
+    console.log('✅ Hostel rooms seeded.');
 
     // 17. ERP - Transport Routes
-    // console.log('🚌 Seeding transport routes...');
+    console.log('🚌 Seeding transport routes...');
     await TransportRoute.create({
       routeName: 'Route 4 - North Delhi Sector 15 Line',
       routeNumber: 'R-4',
@@ -745,10 +745,10 @@ async function seedData() {
       schedule: 'both',
       isActive: true,
     });
-    // console.log('✅ Transport routes seeded.');
+    console.log('✅ Transport routes seeded.');
 
     // 18. Communications - Announcements, Notifications, Messages
-    // console.log('📢 Seeding communications...');
+    console.log('📢 Seeding communications...');
     
     // Global announcement
     await Announcement.create({
@@ -809,14 +809,14 @@ async function seedData() {
       createdAt: new Date(Date.now() - 2.5 * 3600 * 1000), // 2.5 hours ago
     });
 
-    // console.log('✅ Communications seeded.');
-    // console.log('\n🌟 Seeding process completed successfully! All collections populated with real academic records.');
+    console.log('✅ Communications seeded.');
+    console.log('\n🌟 Seeding process completed successfully! All collections populated with real academic records.');
 
   } catch (error) {
-    // console.error('❌ Error seeding data:', error);
+    console.error('❌ Error seeding data:', error);
   } finally {
     await mongoose.disconnect();
-    // console.log('🔌 Disconnected from MongoDB.');
+    console.log('🔌 Disconnected from MongoDB.');
     process.exit(0);
   }
 }
