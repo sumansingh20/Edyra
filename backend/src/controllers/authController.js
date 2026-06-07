@@ -136,7 +136,7 @@ export const register = async (req, res, next) => {
         status: 'success',
       });
     } catch (e) {
-      console.warn('[AUDIT] Log failed:', e.message);
+      // console.warn('[AUDIT] Log failed:', e.message);
     }
 
     // Send welcome email + verification
@@ -150,7 +150,7 @@ export const register = async (req, res, next) => {
       await user.save({ validateBeforeSave: false });
       await sendEmailVerification(user, verifyToken);
     } catch (emailErr) {
-      console.warn('[REGISTER] Email failed (non-fatal):', emailErr.message);
+      // console.warn('[REGISTER] Email failed (non-fatal):', emailErr.message);
     }
 
     res.status(201).json({
@@ -213,7 +213,7 @@ export const login = async (req, res, next) => {
           details: `Failed password attempt. ${attemptsLeft} attempts remaining.`,
         });
       } catch (e) {
-        console.warn('[AUDIT] Log failed:', e.message);
+        // console.warn('[AUDIT] Log failed:', e.message);
       }
 
       if (attemptsLeft > 0) {
@@ -250,7 +250,7 @@ export const login = async (req, res, next) => {
         status: 'success',
       });
     } catch (e) {
-      console.warn('[AUDIT] Log failed:', e.message);
+      // console.warn('[AUDIT] Log failed:', e.message);
     }
 
     res.status(200).json({
@@ -272,7 +272,7 @@ export const login = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('[LOGIN ERROR]', error.message);
+    // console.error('[LOGIN ERROR]', error.message);
     return next(error);
   }
 };
@@ -306,7 +306,7 @@ export const dobLogin = async (req, res, next) => {
           userAgent: req.headers['user-agent'],
           status: 'failure',
         });
-      } catch (e) { console.error("AuditLog error:", e); }
+      } catch (e) { /* console.error("AuditLog error:", e); */ }
       
       throw new AppError('Invalid credentials', 401);
     }
@@ -353,7 +353,7 @@ export const dobLogin = async (req, res, next) => {
             userAgent: req.headers['user-agent'],
             status: 'failure',
           });
-        } catch (e) { console.error("AuditLog error:", e); }
+        } catch (e) { /* console.error("AuditLog error:", e); */ }
         
         throw new AppError('Invalid credentials', 401);
       }
@@ -390,7 +390,7 @@ export const dobLogin = async (req, res, next) => {
           userAgent: req.headers['user-agent'],
           status: 'blocked',
         });
-      } catch (e) { console.error("AuditLog error:", e); }
+      } catch (e) { /* console.error("AuditLog error:", e); */ }
       
       throw new AppError('You are already logged in from another device. Please close that session first.', 403);
     }
@@ -421,7 +421,7 @@ export const dobLogin = async (req, res, next) => {
         status: 'success',
       });
     } catch (e) {
-      console.warn('[AUDIT] Log failed:', e.message);
+      // console.warn('[AUDIT] Log failed:', e.message);
     }
 
     res.status(200).json({
@@ -463,7 +463,7 @@ export const logout = async (req, res, next) => {
         await User.findByIdAndUpdate(req.user._id, {
           $unset: { currentSessionId: 1, currentSessionIpHash: 1, currentSessionUserAgent: 1 }
         });
-      } catch (e) { console.error("AuditLog error:", e); }
+      } catch (e) { /* console.error("AuditLog error:", e); */ }
     }
 
     res.json({
@@ -597,7 +597,7 @@ export const changePassword = async (req, res, next) => {
         status: 'success',
       });
     } catch (e) {
-      console.warn('[AUDIT] Log failed:', e.message);
+      // console.warn('[AUDIT] Log failed:', e.message);
     }
 
     res.json({
@@ -675,7 +675,7 @@ export const forgotPassword = async (req, res, next) => {
     }
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[DEV] Password reset token for ${email}: ${resetToken}`);
+      // console.log(`[DEV] Password reset token for ${email}: ${resetToken}`);
     }
 
     res.json({
@@ -724,7 +724,7 @@ export const resetPassword = async (req, res, next) => {
         status: 'success',
       });
     } catch (e) {
-      console.warn('[AUDIT] Log failed:', e.message);
+      // console.warn('[AUDIT] Log failed:', e.message);
     }
 
     res.json({ success: true, message: 'Password reset successful. Please log in with your new password.' });
@@ -748,11 +748,11 @@ export const requestEmailVerification = async (req, res, next) => {
     try {
       await sendEmailVerification(user, verifyToken);
     } catch (emailErr) {
-      console.warn('[EMAIL] Verification send failed:', emailErr.message);
+      // console.warn('[EMAIL] Verification send failed:', emailErr.message);
     }
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[DEV] Email verification token for ${user.email}: ${verifyToken}`);
+      // console.log(`[DEV] Email verification token for ${user.email}: ${verifyToken}`);
     }
 
     res.json({

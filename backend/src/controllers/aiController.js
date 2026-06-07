@@ -38,7 +38,7 @@ Return ONLY a valid JSON object matching this schema:
           status: 'draft'
         }));
       } catch (e) {
-        console.error('Failed to parse AI output', e);
+        // console.error('Failed to parse AI output', e);
       }
     }
 
@@ -107,7 +107,7 @@ Return ONLY a valid JSON object matching this schema:
           aiGenerated: true
         };
       } catch (e) {
-        console.error('Failed to parse AI output', e);
+        // console.error('Failed to parse AI output', e);
       }
     }
 
@@ -156,7 +156,7 @@ Return ONLY a valid JSON object.`;
           wordCount: content.split(/\\s+/).length
         };
       } catch (e) {
-        console.error('Failed to parse AI output', e);
+        // console.error('Failed to parse AI output', e);
       }
     }
 

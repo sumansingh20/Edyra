@@ -2,7 +2,7 @@ import ExamSession from '../models/ExamSession.js';
 import ExamBatch from '../models/ExamBatch.js';
 import Exam from '../models/Exam.js';
 import Violation from '../models/Violation.js';
-import User from '../models/User.js';
+
 
 // Map violation types to severity levels
 const getViolationSeverity = (type) => {
@@ -42,7 +42,7 @@ export const setupExamSocket = (io) => {
   // TEACHER/ADMIN MONITORING NAMESPACE
   // ==========================================
   monitorNamespace.on('connection', async (socket) => {
-    console.log('[Monitor] Connected:', socket.id);
+    // console.log('[Monitor] Connected:', socket.id);
     
     // Join exam monitoring room
     socket.on('join-exam-monitor', async ({ examId, token }) => {
@@ -56,7 +56,7 @@ export const setupExamSocket = (io) => {
         const stats = await getExamStats(examId);
         socket.emit('exam-stats', stats);
         
-        console.log(`[Monitor] Joined exam ${examId}`);
+        // console.log(`[Monitor] Joined exam ${examId}`);
       } catch (error) {
         socket.emit('error', { message: 'Failed to join monitor' });
       }
@@ -136,7 +136,7 @@ export const setupExamSocket = (io) => {
     });
     
     socket.on('disconnect', () => {
-      console.log('[Monitor] Disconnected:', socket.id);
+      // console.log('[Monitor] Disconnected:', socket.id);
     });
   });
   
@@ -144,7 +144,7 @@ export const setupExamSocket = (io) => {
   // STUDENT EXAM SESSION NAMESPACE
   // ==========================================
   examNamespace.on('connection', async (socket) => {
-    console.log('[Exam] Student connected:', socket.id);
+    // console.log('[Exam] Student connected:', socket.id);
     
     // Join exam session room
     socket.on('join-exam', async ({ sessionToken, fingerprint }) => {
@@ -196,10 +196,10 @@ export const setupExamSocket = (io) => {
           socketId: socket.id,
         });
         
-        console.log(`[Exam] Student joined session: ${sessionToken}`);
+        // console.log(`[Exam] Student joined session: ${sessionToken}`);
         
       } catch (error) {
-        console.error('[Exam] Join error:', error);
+        // console.error('[Exam] Join error:', error);
         socket.emit('error', { message: 'Failed to join exam' });
       }
     });
@@ -254,7 +254,7 @@ export const setupExamSocket = (io) => {
         }
         
       } catch (error) {
-        console.error('[Exam] Violation error:', error);
+        // console.error('[Exam] Violation error:', error);
       }
     });
     
@@ -284,7 +284,7 @@ export const setupExamSocket = (io) => {
         });
         
       } catch (error) {
-        console.error('[Exam] Save answer error:', error);
+        // console.error('[Exam] Save answer error:', error);
         socket.emit('save-failed', { reason: 'Save failed' });
       }
     });
@@ -327,7 +327,7 @@ export const setupExamSocket = (io) => {
         });
         
       } catch (error) {
-        console.error('[Exam] Submit error:', error);
+        // console.error('[Exam] Submit error:', error);
         socket.emit('submit-failed', { reason: 'Submission failed' });
       }
     });
@@ -356,13 +356,13 @@ export const setupExamSocket = (io) => {
         });
         
       } catch (error) {
-        console.error('[Exam] Heartbeat error:', error);
+        // console.error('[Exam] Heartbeat error:', error);
       }
     });
     
     // Handle disconnect
     socket.on('disconnect', async (reason) => {
-      console.log(`[Exam] Student disconnected: ${socket.id}, reason: ${reason}`);
+      // console.log(`[Exam] Student disconnected: ${socket.id}, reason: ${reason}`);
       
       if (socket.sessionToken) {
         try {
@@ -383,7 +383,7 @@ export const setupExamSocket = (io) => {
             });
           }
         } catch (error) {
-          console.error('[Exam] Disconnect handling error:', error);
+          // console.error('[Exam] Disconnect handling error:', error);
         }
       }
     });
@@ -413,7 +413,7 @@ export const setupExamSocket = (io) => {
         });
       }
     } catch (error) {
-      console.error('[System] Expired session check error:', error);
+      // console.error('[System] Expired session check error:', error);
     }
   }, 30000);
   
@@ -440,7 +440,7 @@ export const setupExamSocket = (io) => {
         });
       }
     } catch (error) {
-      console.error('[System] Inactive session check error:', error);
+      // console.error('[System] Inactive session check error:', error);
     }
   }, 60000);
   
@@ -454,7 +454,7 @@ export const setupExamSocket = (io) => {
         monitorNamespace.to(`exam-${exam._id}`).emit('exam-stats', stats);
       }
     } catch (error) {
-      console.error('[System] Stats broadcast error:', error);
+      // console.error('[System] Stats broadcast error:', error);
     }
   }, 10000);
   

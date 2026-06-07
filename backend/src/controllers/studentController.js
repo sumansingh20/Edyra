@@ -8,7 +8,7 @@ try {
   const redis = await import('../config/redis.js');
   redisClient = redis.default;
 } catch (e) {
-  console.warn('[REDIS] Not available, using database only');
+  // console.warn('[REDIS] Not available, using database only');
 }
 
 // @desc    Get available exams for student
@@ -352,7 +352,7 @@ export const saveAnswer = async (req, res, next) => {
           timeTaken,
         });
       } catch (e) {
-        console.warn('[REDIS] updateExamAnswer failed:', e.message);
+        // console.warn('[REDIS] updateExamAnswer failed:', e.message);
       }
     }
 
@@ -948,7 +948,7 @@ async function storeExamState(submission, questions) {
       questionCount: questions.length,
     });
   } catch (e) {
-    console.warn('[REDIS] storeExamState failed:', e.message);
+    // console.warn('[REDIS] storeExamState failed:', e.message);
   }
 }
 
@@ -968,7 +968,7 @@ async function autoSubmitExam(submission, type = 'auto-timeout') {
     try {
       await redisClient.deleteExamState(submission.sessionId);
     } catch (e) {
-      console.warn('[REDIS] deleteExamState failed:', e.message);
+      // console.warn('[REDIS] deleteExamState failed:', e.message);
     }
   }
 

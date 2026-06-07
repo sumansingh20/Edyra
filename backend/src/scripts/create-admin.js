@@ -34,38 +34,38 @@ const createAdmin = async () => {
   }
 
   if (!email || !password) {
-    console.error('\n❌ Error: Email and password are required!\n');
-    console.log('Usage:');
-    console.log('  npm run create-admin -- --email admin@edyra.com --password Admin@123\n');
-    console.log('Options:');
-    console.log('  --email       Admin email address (required)');
-    console.log('  --password    Admin password (required)');
-    console.log('  --firstName   Admin first name (default: System)');
-    console.log('  --lastName    Admin last name (default: Administrator)\n');
+    // console.error('\n❌ Error: Email and password are required!\n');
+    // console.log('Usage:');
+    // console.log('  npm run create-admin -- --email admin@edyra.com --password Admin@123\n');
+    // console.log('Options:');
+    // console.log('  --email       Admin email address (required)');
+    // console.log('  --password    Admin password (required)');
+    // console.log('  --firstName   Admin first name (default: System)');
+    // console.log('  --lastName    Admin last name (default: Administrator)\n');
     process.exit(1);
   }
 
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    console.error('❌ Error: Invalid email format');
+    // console.error('❌ Error: Invalid email format');
     process.exit(1);
   }
 
   // Validate password strength
   if (password.length < 8) {
-    console.error('❌ Error: Password must be at least 8 characters');
+    // console.error('❌ Error: Password must be at least 8 characters');
     process.exit(1);
   }
 
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/edyra');
-    console.log('✅ Connected to MongoDB\n');
+    // console.log('✅ Connected to MongoDB\n');
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email });
     if (existingAdmin) {
-      console.error(`❌ Error: User with email "${email}" already exists`);
+      // console.error(`❌ Error: User with email "${email}" already exists`);
       process.exit(1);
     }
 
@@ -80,14 +80,14 @@ const createAdmin = async () => {
       isActive: true,
     });
 
-    console.log('✅ Admin account created successfully!\n');
-    console.log('📧 Email:', admin.email);
-    console.log('👤 Name:', `${admin.firstName} ${admin.lastName}`);
-    console.log('🔑 Role:', admin.role);
-    console.log('\n💡 You can now log in at /login\n');
+    // console.log('✅ Admin account created successfully!\n');
+    // console.log('📧 Email:', admin.email);
+    // console.log('👤 Name:', `${admin.firstName} ${admin.lastName}`);
+    // console.log('🔑 Role:', admin.role);
+    // console.log('\n💡 You can now log in at /login\n');
 
   } catch (error) {
-    console.error('❌ Error creating admin:', error.message);
+    // console.error('❌ Error creating admin:', error.message);
     process.exit(1);
   } finally {
     await mongoose.disconnect();

@@ -184,7 +184,7 @@ export const examSessionController = {
       // Validate DOB password
       if (!validateDOBPassword(password, student.dateOfBirth)) {
         // Log failed attempt (no submission exists yet, so use AuditLog instead)
-        console.warn(`[DOB-LOGIN] Failed attempt for student ${userId} on exam ${examId}`);
+        // console.warn(`[DOB-LOGIN] Failed attempt for student ${userId} on exam ${examId}`);
         
         throw new AppError('Invalid credentials', 401);
       }
@@ -772,16 +772,16 @@ export const examSessionController = {
               submission.status = 'evaluated';
               await submission.save();
             } catch (calcErr) {
-              console.error('Calculate results error:', calcErr);
+              // console.error('Calculate results error:', calcErr);
               // Submission still created with basic scoring
             }
           }
         } catch (submissionErr) {
-          console.error('Submission creation error:', submissionErr);
+          // console.error('Submission creation error:', submissionErr);
           // Don't fail the exam submit if submission creation fails
         }
       } catch (gradingErr) {
-        console.error('Auto-grading error:', gradingErr);
+        // console.error('Auto-grading error:', gradingErr);
       }
       
       // Update batch stats

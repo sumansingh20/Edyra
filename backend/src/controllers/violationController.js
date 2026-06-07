@@ -9,7 +9,7 @@ try {
   const redis = await import('../config/redis.js');
   redisClient = redis.default;
 } catch (e) {
-  console.warn('[REDIS] Not available in violationController');
+  // console.warn('[REDIS] Not available in violationController');
 }
 
 // Violation severity mapping

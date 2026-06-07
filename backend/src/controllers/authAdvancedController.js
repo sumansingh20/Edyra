@@ -76,7 +76,7 @@ export const enable2FA = async (req, res, next) => {
         status: 'success',
       });
     } catch (e) {
-      console.error('AuditLog error:', e);
+      // console.error('AuditLog error:', e);
     }
 
     res.json({
@@ -233,7 +233,7 @@ export const trackDevice = async (req, res, next) => {
           status: 'success'
         });
       } catch (e) {
-        console.error('AuditLog error:', e);
+        // console.error('AuditLog error:', e);
       }
     } else {
       device.lastActiveAt = Date.now();

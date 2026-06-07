@@ -31,12 +31,12 @@ const createRedisClient = () => {
 
   client.on('connect', () => {
     redisConnected = true;
-    console.log('[REDIS] Connected');
+    // console.log('[REDIS] Connected');
   });
 
   client.on('error', (err) => {
     if (redisConnected) {
-      console.warn('[REDIS] Error:', err.message);
+      // console.warn('[REDIS] Error:', err.message);
     }
     redisConnected = false;
   });

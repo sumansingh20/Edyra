@@ -134,7 +134,7 @@ export const validateSession = async (req, res, next) => {
 /* ========== SESSION MANAGEMENT (NO-OP without Redis) ========== */
 export const invalidateSession = async (userId, reason = 'Logged out') => {
   // Without Redis, logout is handled client-side by deleting token
-  console.log(`[SESSION] Invalidate requested for user ${userId}: ${reason}`);
+  // console.log(`[SESSION] Invalidate requested for user ${userId}: ${reason}`);
 };
 
 export const createSession = async (user, ipAddress, userAgent) => {
@@ -151,7 +151,7 @@ export const createSession = async (user, ipAddress, userAgent) => {
 
 export const refreshSessionActivity = async (userId) => {
   // Without Redis, no-op
-  console.log(`[SESSION] Activity refresh for user ${userId}`);
+  // console.log(`[SESSION] Activity refresh for user ${userId}`);
 };
 
 // Aliases for backward compatibility

@@ -412,7 +412,7 @@ function createDocumentationPDF() {
   }
 
   doc.end();
-  console.log(`Successfully generated exhaustive enterprise documentation PDF at: ${outputPath}`);
+  // console.log(`Successfully generated exhaustive enterprise documentation PDF at: ${outputPath}`);
 }
 
 createDocumentationPDF();

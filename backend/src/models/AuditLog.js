@@ -141,7 +141,7 @@ auditLogSchema.statics.log = async function(data) {
     await log.save();
     return log;
   } catch (error) {
-    console.error('Failed to create audit log:', error);
+    // console.error('Failed to create audit log:', error);
     return null;
   }
 };

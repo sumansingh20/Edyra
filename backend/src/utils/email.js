@@ -74,10 +74,10 @@ const sendMail = async ({ to, subject, html, text }) => {
   const from = config.email?.from || `"EDYRA LMS" <noreply@edyra.com>`;
   try {
     const info = await transporter.sendMail({ from, to, subject, html, text });
-    console.log(`[EMAIL] Sent to ${to}: ${subject} — MessageId: ${info.messageId}`);
+    // console.log(`[EMAIL] Sent to ${to}: ${subject} — MessageId: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`[EMAIL] Failed to send to ${to}:`, err.message);
+    // console.error(`[EMAIL] Failed to send to ${to}:`, err.message);
     return { success: false, error: err.message };
   }
 };

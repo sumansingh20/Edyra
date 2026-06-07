@@ -1,5 +1,5 @@
 import { setupExamSocket } from './examMonitorSocket.js';
-import { setupExamLiveSocket } from './examSocket.js';
+
 import { setupCollaborationSocket } from './collaborationSocket.js';
 import { pushNotification } from '../config/redis.js';
 
@@ -90,7 +90,7 @@ export const setupSockets = (io) => {
         socket.join(`role:${userRole}`);
       }
 
-      console.log(`[SOCKET] User ${userId} connected (${socket.id}). Online: ${connectedUsers.size}`);
+      // console.log(`[SOCKET] User ${userId} connected (${socket.id}). Online: ${connectedUsers.size}`);
 
       // Broadcast updated online count to admins
       io.to('role:admin').to('role:super-admin').emit('system:online-count', {
@@ -167,7 +167,7 @@ export const setupSockets = (io) => {
     socket.on('disconnect', () => {
       if (userId) {
         removeUserSocket(userId, socket.id);
-        console.log(`[SOCKET] User ${userId} disconnected. Online: ${connectedUsers.size}`);
+        // console.log(`[SOCKET] User ${userId} disconnected. Online: ${connectedUsers.size}`);
         io.to('role:admin').to('role:super-admin').emit('system:online-count', {
           count: connectedUsers.size,
           timestamp: new Date().toISOString(),
@@ -180,17 +180,17 @@ export const setupSockets = (io) => {
   try {
     setupExamSocket(io);
   } catch (e) {
-    console.warn('[SOCKET] Exam socket setup failed:', e.message);
+    // console.warn('[SOCKET] Exam socket setup failed:', e.message);
   }
 
   /* ── COLLABORATION NAMESPACE ── */
   try {
     setupCollaborationSocket(io);
   } catch (e) {
-    console.warn('[SOCKET] Collaboration socket setup failed:', e.message);
+    // console.warn('[SOCKET] Collaboration socket setup failed:', e.message);
   }
 
-  console.log('[SOCKET.IO] All namespaces initialized');
+  // console.log('[SOCKET.IO] All namespaces initialized');
   return io;
 };
 
