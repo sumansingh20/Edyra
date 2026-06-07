@@ -8,6 +8,7 @@ mac:
   target:
     - dmg
 win:
+  signAndEditExecutable: false
   target:
     - nsis
 linux:

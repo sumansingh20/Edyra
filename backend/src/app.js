@@ -1,4 +1,5 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import helmet from 'helmet';
@@ -16,6 +17,11 @@ import { getUploadsBaseDir } from './utils/storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load root .env for local development runs (Vercel injects env at runtime)
+if (!process.env.VERCEL) {
+  dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
+}
 
 const app = express();
 

@@ -52,6 +52,22 @@ interface ExamSettings {
   blockRightClick: boolean;
 }
 
+const toDateTimeLocalValue = (date: Date) => {
+  const tzOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+  const local = new Date(date.getTime() - tzOffsetMs);
+  return local.toISOString().slice(0, 16);
+};
+
+const getDefaultWindow = () => {
+  const now = new Date();
+  const start = new Date(now.getTime() + 10 * 60 * 1000);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  return {
+    startTime: toDateTimeLocalValue(start),
+    endTime: toDateTimeLocalValue(end),
+  };
+};
+
 const defaultSettings: ExamSettings = {
   title: '',
   courseCode: '',
@@ -85,7 +101,10 @@ const defaultSettings: ExamSettings = {
 
 export default function CreateExamPage() {
   const router = useRouter();
-  const [settings, setSettings] = useState<ExamSettings>(defaultSettings);
+  const [settings, setSettings] = useState<ExamSettings>(() => ({
+    ...defaultSettings,
+    ...getDefaultWindow(),
+  }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverTime, setServerTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('general');
@@ -149,6 +168,7 @@ export default function CreateExamPage() {
         startTime: startISO,
         endTime: endISO,
         maxAttempts: settings.maxAttempts,
+        totalMarks: settings.totalMarks,
         passingMarks: settings.passingMarks,
         negativeMarking: settings.negativeMarking,
         negativeMarkValue: settings.negativeMarking ? settings.negativeMarkValue : 0,
@@ -161,10 +181,15 @@ export default function CreateExamPage() {
         calculatorType: settings.calculatorType,
         calculatorEnabled: settings.calculatorType !== 'none',
         enableProctoring: settings.requireFullscreen || settings.detectTabSwitch || settings.detectCopyPaste,
+        maxViolationsBeforeWarning: Math.max(1, settings.maxViolations - 2),
         detectTabSwitch: settings.detectTabSwitch,
         detectCopyPaste: settings.detectCopyPaste,
         blockRightClick: settings.blockRightClick,
         maxViolationsBeforeSubmit: settings.maxViolations,
+        // Keep batching settings in sync with UI choices.
+        enableBatching: settings.totalBatches > 1 || settings.batchSize < 500,
+        batchSize: settings.batchSize,
+        batchBufferMinutes: 15,
         status,
       };
       

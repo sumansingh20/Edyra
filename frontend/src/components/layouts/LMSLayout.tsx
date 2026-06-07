@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import DarkModeToggle from '@/components/common/DarkModeToggle';
 import NotificationPanel from '@/components/common/NotificationPanel';
+import LiveClock from '@/components/common/LiveClock';
 
 interface LMSLayoutProps {
   children: React.ReactNode;
@@ -89,26 +90,25 @@ function getDashboardHref(role: string): string {
   return '/student/dashboard';
 }
 
-import LiveClock from '@/components/common/LiveClock';
-
 export default function LMSLayout({ children, pageTitle, breadcrumbs }: LMSLayoutProps) {
   const pathname = usePathname();
-  const { user, logout, isAuthenticated, checkAuth } = useAuthStore();
+  const { user, logout, isAuthenticated, checkAuth, isInitialized } = useAuthStore();
   const [mounted, setMounted] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    checkAuth().catch(console.error).finally(() => setAuthChecked(true));
-  }, []);
+    if (!isInitialized) {
+      checkAuth();
+    }
+  }, [checkAuth, isInitialized]);
 
   const handleLogout = useCallback(async () => {
     await logout();
     window.location.href = '/login';
   }, [logout]);
 
-  if (!mounted || !authChecked) {
+  if (!mounted || !isInitialized) {
     return (
       <div className="auth-status-page">
         <div className="spinner" />

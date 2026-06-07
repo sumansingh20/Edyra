@@ -12,12 +12,11 @@
     "dist": "electron-builder",
     "lint": "echo \"No lint configured\""
   },
-  "dependencies": {
-    "electron": "^30.0.0"
-  },
   "devDependencies": {
+    "electron": "^30.0.0",
     "electron-builder": "^25.1.8"
-  }
+  },
+  "author": "Edyra Team"
 }
 
 
