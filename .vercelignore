@@ -1,0 +1,11 @@
+**/node_modules
+**/.next
+**/.git
+**/*.pdf
+**/*.docx
+**/*.log
+**/.DS_Store
+**/uploads
+.vscode
+.idea
+WebBrowser

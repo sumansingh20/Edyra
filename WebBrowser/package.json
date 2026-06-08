@@ -1,0 +1,23 @@
+{
+  "name": "edyra-webbrowser",
+  "version": "1.0.0",
+  "description": "Chrome-like desktop web browser built with Electron + Chromium",
+  "main": "main.js",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder",
+    "dist": "electron-builder",
+    "lint": "echo \"No lint configured\""
+  },
+  "dependencies": {
+    "electron": "^30.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8"
+  }
+}
+
+
